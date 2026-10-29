@@ -45,7 +45,7 @@ describe('shopping journey', () => {
     const user = userEvent.setup();
     const store = createAppStore();
     render(<Provider store={store}><App /></Provider>);
-    await user.click(screen.getByRole('link', { name: /Get Started/ }));
+    await user.click(screen.getByRole('button', { name: /Get Started/ }));
     const addButton = await screen.findByRole('button', { name: 'Add Monstera Deliciosa to cart' });
     await user.click(addButton);
     expect(screen.getByRole('button', { name: 'Monstera Deliciosa added to cart' }).disabled).toBe(true);
@@ -62,7 +62,21 @@ describe('shopping journey', () => {
     await user.click(screen.getByRole('button', { name: 'Delete Monstera Deliciosa' }));
     expect(screen.getByText(/Your cart is empty/)).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Cart, 0 items' })).toBeTruthy();
-    await user.click(screen.getByRole('link', { name: /Continue Shopping/ }));
+    await user.click(screen.getByRole('button', { name: /Continue Shopping/ }));
+    expect((await screen.findByRole('button', { name: 'Add Monstera Deliciosa to cart' })).disabled).toBe(false);
+  });
+  it('removes the last unit with decrement and supports Home navigation', async () => {
+    window.location.hash = 'cart';
+    const store = createAppStore();
+    store.dispatch(addItem(monstera));
+    const user = userEvent.setup();
+    render(<Provider store={store}><App /></Provider>);
+    await user.click(screen.getByRole('button', { name: 'Decrease Monstera Deliciosa quantity' }));
+    expect(screen.getByText(/Your cart is empty/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Cart, 0 items' })).toBeTruthy();
+    await user.click(screen.getByRole('link', { name: 'Home', exact: true }));
+    await screen.findByRole('heading', { name: 'Welcome to Paradise Nursery' });
+    await user.click(screen.getByRole('button', { name: /Get Started/ }));
     expect((await screen.findByRole('button', { name: 'Add Monstera Deliciosa to cart' })).disabled).toBe(false);
   });
 });

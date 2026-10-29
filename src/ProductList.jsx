@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { addItem, selectCartItems, selectCartQuantity } from './CartSlice.jsx';
 
-const plant = (id, name, price, description) => ({ id, name, price, description, image: `${import.meta.env.BASE_URL}plants/${id}.svg` });
+const plant = (id, name, cost, description) => ({ id, name, cost, description, image: `${import.meta.env.BASE_URL}plants/${id}.svg` });
 
 // Six different houseplants in each of three categories.
 export const plantCategories = [
@@ -33,12 +33,42 @@ export const plantCategories = [
 
 export const formatMoney = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 
+// This same Navbar is rendered on both ProductList and CartItem pages.
+export function Navbar({ page }) {
+  const totalQuantity = useSelector(selectCartQuantity);
+  const handleHomeClick = () => { window.location.hash = 'home'; };
+  const handleProductClick = () => { window.location.hash = 'plants'; };
+  const handleCartClick = () => { window.location.hash = 'cart'; };
+  return (
+    <header className="navbar site-header">
+      <a href="#home" onClick={handleHomeClick} className="brand" aria-label="Paradise Nursery home">
+        <span className="brand-symbol" aria-hidden="true">❧</span>
+        <span>Paradise Nursery<small>GROW SOMETHING GOOD</small></span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#home" onClick={handleHomeClick} aria-current={page === 'home' ? 'page' : undefined}>Home</a>
+        <a href="#plants" onClick={handleProductClick} aria-current={page === 'plants' ? 'page' : undefined}>Plants</a>
+        <a href="#cart" onClick={handleCartClick} className="cart-link" aria-current={page === 'cart' ? 'page' : undefined}
+          aria-label={`Cart, ${totalQuantity} items`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <path d="M3 3h2l2.4 12h11.4l2-8H6M9 20h.01M18 20h.01" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>Cart</span><span id="cart_quantity_count" className="cart_quantity_count cart-count" aria-live="polite">{totalQuantity}</span>
+        </a>
+      </nav>
+    </header>
+  );
+}
+
 export default function ProductList() {
   const dispatch = useDispatch();
   const cartItems = useSelector(selectCartItems);
   const totalQuantity = useSelector(selectCartQuantity);
-  const addedIds = new Set(cartItems.map((item) => item.id));
+  // Deriving from Redux also re-enables the button when a cart item is deleted.
+  const addedToCart = Object.fromEntries(cartItems.map((item) => [item.name, true]));
+  const handleAddToCart = (plant) => dispatch(addItem(plant));
   return (
+    <><Navbar page="plants" />
     <main className="catalog container" id="main-content" tabIndex={-1}>
       <div className="page-intro">
         <div><p className="eyebrow">THE PLANT COLLECTION</p><h1>Find your kind of green.</h1>
@@ -51,14 +81,14 @@ export default function ProductList() {
         <section className="plant-category" key={category.name} aria-labelledby={`category-${categoryIndex}`}>
           <div className="category-heading"><span className="section-number">0{categoryIndex + 1}</span>
             <div><h2 id={`category-${categoryIndex}`}>{category.name}</h2><p>{category.description}</p></div></div>
-          <div className="plant-grid">{category.plants.map((plant) => {
-            const isAdded = addedIds.has(plant.id);
+          <div className="product-list plant-grid">{category.plants.map((plant) => {
+            const isAdded = addedToCart[plant.name];
             return (
               <article className="plant-card" key={plant.id}>
                 <div className="plant-image"><img src={plant.image} alt={plant.name} loading="lazy" width="400" height="400" /></div>
-                <div className="plant-card-heading"><h3>{plant.name}</h3><span>{formatMoney(plant.price)}</span></div>
+                <div className="plant-card-heading"><h3>{plant.name}</h3><span>{formatMoney(plant.cost)}</span></div>
                 <p>{plant.description}</p>
-                <button className="add-button" disabled={isAdded} onClick={() => dispatch(addItem(plant))}
+                <button className="add-button" disabled={!!addedToCart[plant.name]} onClick={() => handleAddToCart(plant)}
                   aria-label={isAdded ? `${plant.name} added to cart` : `Add ${plant.name} to cart`}>
                   {isAdded ? 'Added to Cart ✓' : 'Add to Cart +'}
                 </button>
@@ -67,6 +97,6 @@ export default function ProductList() {
           })}</div>
         </section>
       ))}
-    </main>
+    </main></>
   );
 }

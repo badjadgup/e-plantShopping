@@ -1,6 +1,6 @@
 export default function AboutUs() {
   return (
-    <section className="about-us" aria-labelledby="about-title">
+    <section className="about-us-container about-us" aria-labelledby="about-title">
       <p className="eyebrow">ROOTED IN A LOVE OF GROWING</p>
       <h2 id="about-title">A greener home.<br />A happier everyday.</h2>
       <p>At Paradise Nursery, we believe that every home deserves a little nature.
